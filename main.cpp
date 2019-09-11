@@ -67,6 +67,7 @@ class Galax : public olc::PixelGameEngine
                     float dx;
                     float dy;
                     float angle;
+                    int nShotsFired;
                 };
                 vector<sSpaceObject> vecBullets;
                 vector<sSpaceObject> vecBadGuys; 
@@ -113,10 +114,10 @@ class Galax : public olc::PixelGameEngine
                     
                     
                     for (int i =0; i <= 5; i++) {
-                        vecBadGuys.push_back({1, (float)(rand() % ScreenWidth()) - 60, (float)(rand() % ScreenHeight() /2 * -1), fBadGuySpeed * sinf(0.0f), fBadGuySpeed * cosf(0.0f) , 0.0f});
+                        vecBadGuys.push_back({1, (float)(rand() % ScreenWidth()) - 60, (float)(rand() % ScreenHeight() /2 * -1), fBadGuySpeed * sinf(0.0f), fBadGuySpeed * cosf(0.0f) , 0.0f, 0});
                     }
                     for (int i =0; i <= 1; i++) {
-                        badGuy2.push_back({3, (float)(rand() % ScreenWidth()), (float)(rand() % ScreenHeight() + 100) * -1 , 0, 0, 0});
+                        badGuy2.push_back({3, (float)(rand() % ScreenWidth()), (float)(rand() % ScreenHeight() + 100) * -1 , 0, 0, 0, 0});
                     }
                     return true;
 		}
@@ -132,7 +133,7 @@ class Galax : public olc::PixelGameEngine
                     DrawString(2, 2, "  SCORE: " + to_string(nScore));
                     DrawString(12, 24, "  press P to play " );
                     DrawString(12, 38, "  press Q to quit " );
-                    DrawString(12, 50, "  ... " );
+                    DrawString(12, 50, "  ... TODO ???" );
                     
                     if (GetKey(olc::Key::P).bPressed) {       
                              gameOver = false;
@@ -167,7 +168,7 @@ class Galax : public olc::PixelGameEngine
 
 
                     if (GetKey(olc::Key::SPACE).bReleased  || GetKey(olc::Key::CTRL).bReleased || GetMouse(0).bPressed)
-                        vecBullets.push_back({ 0, mx -11, my - 45, bulletSpeed * sinf(0.0f), - bulletSpeed * cosf(0.0f), 0.0f });
+                        vecBullets.push_back({ 0, mx -11, my - 45, bulletSpeed * sinf(0.0f), - bulletSpeed * cosf(0.0f), 0.0f, 0 });
                     if (GetKey(olc::Key::ESCAPE).bPressed || GetKey(olc::Key::Q).bPressed ) 
                     {
                         nPlayerHP = -1;  //press esc or q to exit
@@ -193,6 +194,7 @@ class Galax : public olc::PixelGameEngine
                                     bad2.x = (float)(rand() % ScreenWidth()) - 60;
                                     bad2.y = (float)(rand() % ScreenHeight() * -1);
                                     bad2.nHitPoints = 3;
+                                    bad2.nShotsFired = 0;
                                     nScore += 50 ;                            
                                 } else {
                                     b.y = -40.0f;
@@ -234,6 +236,7 @@ class Galax : public olc::PixelGameEngine
                         if ( bad.y >= ScreenHeight() ){
                             bad.y = (float)(rand() % ScreenHeight() /2 * -1);
                             bad.x = (float)(rand() % ScreenWidth() - 60);
+                            bad.nShotsFired = 0;
                         }
                         // check Player collision
                         if(RectRectCollision(bad.x , bad.y , 60.0f, 34.0f, mx , my , 60.0f, 85.0f))  
@@ -244,13 +247,15 @@ class Galax : public olc::PixelGameEngine
                             nScore += 10 ;
                         }
                         // if he gets to X pos of 30 have him shoot a bullet 
-                        if(bad.y >= 30.0f && bad.y <= 33.0f ) {
-                            vecBullets.push_back({ 0, bad.x +30.0f-7.5f, bad.y + 34.0f , bulletSpeed * sinf(3.1415f), - bulletSpeed * cosf(3.1415f), 0.0f });
+                        if(bad.y >= 30.0f && bad.nShotsFired == 0 ) {
+                            vecBullets.push_back({ 0, bad.x +30.0f-7.5f, bad.y + 34.0f , bulletSpeed * sinf(3.1415f), - bulletSpeed * cosf(3.1415f), 0.0f, 0 });
+                            bad.nShotsFired++;
                         }
 
                         bad.x += bad.dx * fElapsedTime;
                         bad.y += bad.dy * fElapsedTime;
                         bad.angle -= 1.0f * fElapsedTime;
+                        
 
                     }    
 
@@ -263,6 +268,7 @@ class Galax : public olc::PixelGameEngine
                             nPlayerHP-- ;
                             bad2.x = (float)(rand() % ScreenWidth()) - 60;       // reset baddie x pos to starting 
                             bad2.y = (float)(rand() % ScreenHeight() * -1);   // reset baddie y pos to starting 
+                            bad2.nShotsFired = 0;
                             nScore += 10 ;
                         }
 
@@ -281,11 +287,13 @@ class Galax : public olc::PixelGameEngine
                         SetPixelMode(olc::Pixel::NORMAL);
                         
                         // give the bad2 guy a shot
-                        if(bad2.y >= 40.0f && bad2.y <= 42.0f ) {
-                            vecBullets.push_back({ 0, bad2.x , bad2.y + 50.0f , bulletSpeed * sinf(-bad2.angle), - bulletSpeed * cosf(bad2.angle), bad2.angle });
+                        if(bad2.y >= 40.0f && bad2.y <= 45.0f  && bad2.nShotsFired <= 2 ) {
+                            vecBullets.push_back({ 0, bad2.x , bad2.y + 50.0f , bulletSpeed * sinf(-bad2.angle), - bulletSpeed * cosf(bad2.angle), bad2.angle, 0 });
+                            bad2.nShotsFired++;
                         }
-                        if(bad2.y >= 400.0f && bad2.y <= 402.0f ) {
-                            vecBullets.push_back({ 0, bad2.x +65.0f/2 , bad2.y + 89.0f , bulletSpeed * sinf(-bad2.angle), - bulletSpeed * cosf(bad2.angle), bad2.angle });
+                        if(bad2.y >= 400.0f && bad2.y <= 405.0f && bad2.nShotsFired <= 2 ) {
+                            vecBullets.push_back({ 0, bad2.x +65.0f/2 , bad2.y + 89.0f , bulletSpeed * sinf(-bad2.angle), - bulletSpeed * cosf(bad2.angle), bad2.angle, 0 });
+                            bad2.nShotsFired++;
                         }
                         
                     }
